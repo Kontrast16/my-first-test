@@ -46,7 +46,80 @@
                 const formData = new FormData();
                 formData.append('frame', blob, 'frame.jpg');
 
-                fetch('http://192.168.1.107:5000/process_frame', {
+                fetch('http://<!DOCTYPE html>
+<html>
+<head>
+    <title>Face Detection</title>
+    <style>
+        #video, #canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+        #count {
+            position: relative;
+            top: 480px;
+        }
+    </style>
+</head>
+<body>
+    <video id="video" width="640" height="480" autoplay></video>
+    <canvas id="canvas" width="640" height="480"></canvas>
+    <p>Людей в кадре: <span id="count">0</span></p>
+
+    <script>
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const countDisplay = document.getElementById('count');
+
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => {
+                video.srcObject = stream;
+            })
+            .catch(err => {
+                console.error("Ошибка доступа к камере: ", err);
+            });
+
+        function sendFrame() {
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = video.videoWidth;
+            tempCanvas.height = video.videoHeight;
+            tempCanvas.getContext('2d').drawImage(video, 0, 0);
+            tempCanvas.toBlob(blob => {
+                if (!blob) {
+                    console.error("Кадр пустой");
+                    return;
+                }
+                const formData = new FormData();
+                formData.append('frame', blob, 'frame.jpg');
+
+                fetch('http://127.0.0.1:5000/process_frame', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log("Найдено лиц:", data.count, "Координаты:", data.faces);
+                    countDisplay.textContent = data.count;
+
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    ctx.strokeStyle = 'red';
+                    ctx.lineWidth = 2;
+                    data.faces.forEach(face => {
+                        ctx.strokeRect(face.x, face.y, face.w, face.h);
+                    });
+                })
+                .catch(err => {
+                    console.error("Ошибка отправки кадра:", err);
+                });
+            }, 'image/jpeg');
+        }
+
+        setInterval(sendFrame, 500);
+    </script>
+</body>
+</html>:5000/process_frame', {
                     method: 'POST',
                     body: formData
                 })
